@@ -14,6 +14,14 @@
     "memory",
     "coding-agent"
   ],
+  "files": [
+    "extensions/archive.ts",
+    "README.md",
+    "LICENSE-MIT"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "pi": {
     "extensions": [
       "extensions/archive.ts"
@@ -23,6 +31,7 @@
     "access": "public"
   },
   "peerDependencies": {
+    "@mariozechner/pi-ai": "*",
     "@mariozechner/pi-coding-agent": "*",
     "@sinclair/typebox": "*"
   },
