@@ -5,38 +5,6 @@ import { DatabaseSync } from "node:sqlite";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-// --- Types ---
-
-type _EntryRow = {
-  rowid: number;
-  session_id: string;
-  entry_id: string;
-  parent_id: string | null;
-  entry_type: string;
-  timestamp: string;
-  role: string | null;
-  tool_name: string | null;
-  tool_call_id: string | null;
-  provider: string | null;
-  model: string | null;
-  stop_reason: string | null;
-  is_error: number | null;
-  model_change_provider: string | null;
-  model_change_model_id: string | null;
-  thinking_level: string | null;
-  compaction_summary: string | null;
-  compaction_first_kept_entry_id: string | null;
-  compaction_tokens_before: number | null;
-  branch_summary: string | null;
-  branch_from_id: string | null;
-  custom_type: string | null;
-  label_target_id: string | null;
-  label: string | null;
-  session_name: string | null;
-  text_content: string | null;
-  raw_json: string;
-};
-
 // --- Schema ---
 
 export const SCHEMA = `
