@@ -26,14 +26,14 @@ Sync is idempotent — re-syncing the same file is a no-op. Appended entries are
 
 Every JSONL entry is parsed into structured columns:
 
-| Column | Description |
-|---|---|
-| `role` | `user`, `assistant`, `toolResult`, `bashExecution`, `custom`, … |
-| `tool_name` | Tool name for tool result entries |
-| `model` | Model ID (e.g. `claude-sonnet-4-5`) |
-| `provider` | Provider (e.g. `anthropic`) |
-| `text_content` | Extracted searchable text |
-| `raw_json` | Full original JSONL line |
+| Column         | Description                                                     |
+| -------------- | --------------------------------------------------------------- |
+| `role`         | `user`, `assistant`, `toolResult`, `bashExecution`, `custom`, … |
+| `tool_name`    | Tool name for tool result entries                               |
+| `model`        | Model ID (e.g. `claude-sonnet-4-5`)                             |
+| `provider`     | Provider (e.g. `anthropic`)                                     |
+| `text_content` | Extracted searchable text                                       |
+| `raw_json`     | Full original JSONL line                                        |
 
 The tree structure of conversations is preserved via `parent_id`, so you can walk branches. Session metadata (cwd, timestamps, parent session for forks) is tracked in a separate `sessions` table.
 
