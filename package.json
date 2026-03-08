@@ -1,0 +1,45 @@
+{
+  "name": "@gordonb/pi-archive",
+  "version": "0.1.0",
+  "description": "SQLite searchable archive of every conversation with Pi agent",
+  "type": "module",
+  "main": "extensions/archive.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gordonbrander/pi-archive"
+  },
+  "keywords": [
+    "pi-package",
+    "memory",
+    "coding-agent"
+  ],
+  "pi": {
+    "extensions": [
+      "extensions/archive.ts"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@sinclair/typebox": "*"
+  },
+  "dependencies": {},
+  "scripts": {
+    "test": "node --test './**/*.test.ts'",
+    "lint": "eslint './**/*.ts'",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "prepublishOnly": "npm test && npm run lint"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.0.0",
+    "eslint": "^10.0.3",
+    "prettier": "^3.8.1",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.56.1"
+  }
+}
