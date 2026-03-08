@@ -107,7 +107,9 @@ CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
 // --- Pure functions ---
 
 /** Extract searchable text content from a parsed JSONL entry. */
-export const extractTextContent = (entry: Record<string, unknown>): string | null => {
+export const extractTextContent = (
+  entry: Record<string, unknown>,
+): string | null => {
   const type = entry.type as string;
 
   if (type === "message") {
@@ -179,9 +181,7 @@ export const extractFromAssistantContent = (
   if (!Array.isArray(content)) return null;
 
   const texts = content
-    .filter(
-      (block) => block.type === "text" && typeof block.text === "string",
-    )
+    .filter((block) => block.type === "text" && typeof block.text === "string")
     .map((block) => block.text as string);
 
   return texts.length > 0 ? texts.join("\n") : null;
@@ -333,7 +333,9 @@ export const INSERT_FTS_SQL = `
 `;
 
 /** Fill in nulls for all optional columns so named params don't error. */
-export const padRow = (row: Record<string, unknown>): Record<string, unknown> => ({
+export const padRow = (
+  row: Record<string, unknown>,
+): Record<string, unknown> => ({
   role: null,
   tool_name: null,
   tool_call_id: null,
@@ -366,7 +368,9 @@ export const syncSessionFile = (
 
   // Check if we've seen this file and at what size
   const existingRow = db
-    .prepare("SELECT session_id, file_size FROM sessions WHERE session_file = ?")
+    .prepare(
+      "SELECT session_id, file_size FROM sessions WHERE session_file = ?",
+    )
     .get(sessionFile) as { session_id: string; file_size: number } | undefined;
 
   if (existingRow && existingRow.file_size >= fileSize) {
@@ -558,9 +562,9 @@ export const getStats = (db: DatabaseSync): ArchiveStats => {
     db.prepare("SELECT COUNT(*) AS c FROM entries").get() as { c: number }
   ).c;
   const messageCount = (
-    db.prepare(
-      "SELECT COUNT(*) AS c FROM entries WHERE entry_type = 'message'",
-    ).get() as { c: number }
+    db
+      .prepare("SELECT COUNT(*) AS c FROM entries WHERE entry_type = 'message'")
+      .get() as { c: number }
   ).c;
   const oldest = db
     .prepare("SELECT MIN(created_at) AS t FROM sessions")
@@ -585,9 +589,7 @@ export const formatSearchResults = (results: SearchResult[]): string => {
 
   return results
     .map((r, i) => {
-      const parts = [
-        `[${i + 1}] ${r.role ?? r.entry_type} — ${r.timestamp}`,
-      ];
+      const parts = [`[${i + 1}] ${r.role ?? r.entry_type} — ${r.timestamp}`];
       if (r.model) parts.push(`    model: ${r.model}`);
       if (r.tool_name) parts.push(`    tool: ${r.tool_name}`);
       parts.push(`    session: ${r.session_id.slice(0, 8)}...`);
@@ -604,10 +606,8 @@ export const formatStats = (stats: ArchiveStats): string => {
     `  Entries:  ${stats.entryCount}`,
     `  Messages: ${stats.messageCount}`,
   ];
-  if (stats.oldestSession)
-    lines.push(`  Oldest:   ${stats.oldestSession}`);
-  if (stats.newestSession)
-    lines.push(`  Newest:   ${stats.newestSession}`);
+  if (stats.oldestSession) lines.push(`  Oldest:   ${stats.oldestSession}`);
+  if (stats.newestSession) lines.push(`  Newest:   ${stats.newestSession}`);
   return lines.join("\n");
 };
 
@@ -682,8 +682,7 @@ export default function (pi: ExtensionAPI) {
     description:
       "Search the archive of all past pi conversations in this project. " +
       "Use FTS5 query syntax: quoted phrases, AND/OR/NOT, prefix*.",
-    promptSnippet:
-      "Search past pi conversations by keyword or phrase",
+    promptSnippet: "Search past pi conversations by keyword or phrase",
     promptGuidelines: [
       "Use search_archive to find relevant context from previous sessions when the user references past work.",
       "Prefer specific quoted phrases over broad single-word queries.",
@@ -729,9 +728,7 @@ export default function (pi: ExtensionAPI) {
 
       const results = searchArchive(database, { query: args.trim() });
       ctx.ui.notify(
-        results.length > 0
-          ? formatSearchResults(results)
-          : "No results found.",
+        results.length > 0 ? formatSearchResults(results) : "No results found.",
         "info",
       );
     },

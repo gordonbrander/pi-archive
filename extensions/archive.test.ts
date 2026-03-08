@@ -67,11 +67,7 @@ const insertEntry = (
 
 // --- Test fixtures ---
 
-const userEntry = (
-  id: string,
-  parentId: string | null,
-  text: string,
-) => ({
+const userEntry = (id: string, parentId: string | null, text: string) => ({
   type: "message",
   id,
   parentId,
@@ -114,7 +110,13 @@ const assistantEntry = (
       cacheRead: 0,
       cacheWrite: 0,
       totalTokens: 150,
-      cost: { input: 0.001, output: 0.0005, cacheRead: 0, cacheWrite: 0, total: 0.0015 },
+      cost: {
+        input: 0.001,
+        output: 0.0005,
+        cacheRead: 0,
+        cacheWrite: 0,
+        total: 0.0015,
+      },
     },
     timestamp: 1735689602000,
   },
@@ -280,10 +282,7 @@ describe("extractTextContent", () => {
       summary: "Branch explored approach A",
       fromId: "e1",
     };
-    assert.strictEqual(
-      extractTextContent(entry),
-      "Branch explored approach A",
-    );
+    assert.strictEqual(extractTextContent(entry), "Branch explored approach A");
   });
 
   it("extracts from custom_message entry", () => {
@@ -668,9 +667,7 @@ describe("insert and FTS sync", () => {
     insertEntry(db, "s1", toolResultEntry("c1", "b1", "bash", "output"));
 
     const entries = db
-      .prepare(
-        "SELECT entry_id, parent_id FROM entries ORDER BY rowid",
-      )
+      .prepare("SELECT entry_id, parent_id FROM entries ORDER BY rowid")
       .all() as Array<{ entry_id: string; parent_id: string | null }>;
 
     assert.strictEqual(entries[0].entry_id, "a1");
@@ -720,9 +717,7 @@ describe("searchArchive", () => {
   it("finds entries matching a query", () => {
     const results = searchArchive(db, { query: "authentication" });
     assert.ok(results.length >= 1);
-    assert.ok(
-      results.some((r) => r.text_content.includes("authentication")),
-    );
+    assert.ok(results.some((r) => r.text_content.includes("authentication")));
   });
 
   it("returns snippets with highlights", () => {
@@ -803,11 +798,7 @@ describe("getStats", () => {
       createdAt: "2026-06-15T00:00:00.000Z",
     });
     insertEntry(db, "s1", userEntry("a1", null, "Hello"));
-    insertEntry(
-      db,
-      "s1",
-      assistantEntry("b1", "a1", "Hi"),
-    );
+    insertEntry(db, "s1", assistantEntry("b1", "a1", "Hi"));
     insertEntry(db, "s2", userEntry("c1", null, "World"));
     // Non-message entry
     insertEntry(db, "s1", {
@@ -990,9 +981,7 @@ describe("syncSessionFile", () => {
 
     // Verify entries
     const entries = db
-      .prepare(
-        "SELECT entry_id, entry_type, role FROM entries ORDER BY rowid",
-      )
+      .prepare("SELECT entry_id, entry_type, role FROM entries ORDER BY rowid")
       .all() as Array<Record<string, unknown>>;
     assert.strictEqual(entries.length, 3);
     assert.strictEqual(entries[0].entry_type, "model_change");
@@ -1043,8 +1032,10 @@ describe("syncSessionFile", () => {
     // Append more entries (simulating pi appending to JSONL)
     fs.appendFileSync(
       filePath,
-      JSON.stringify(assistantEntry("b1", "a1", "First reply")) + "\n" +
-      JSON.stringify(userEntry("c1", "b1", "Second message")) + "\n",
+      JSON.stringify(assistantEntry("b1", "a1", "First reply")) +
+        "\n" +
+        JSON.stringify(userEntry("c1", "b1", "Second message")) +
+        "\n",
     );
 
     const count2 = syncSessionFile(db, filePath);
@@ -1205,17 +1196,13 @@ describe("FTS search features", () => {
   it("supports prefix queries", () => {
     const results = searchArchive(db, { query: "Graph*" });
     assert.ok(results.length >= 1);
-    assert.ok(
-      results.some((r) => r.text_content.includes("GraphQL")),
-    );
+    assert.ok(results.some((r) => r.text_content.includes("GraphQL")));
   });
 
   it("supports NOT queries", () => {
     const results = searchArchive(db, { query: "REST NOT GraphQL" });
     assert.ok(results.length >= 1);
-    assert.ok(
-      results.every((r) => !r.text_content.includes("GraphQL")),
-    );
+    assert.ok(results.every((r) => !r.text_content.includes("GraphQL")));
   });
 });
 
@@ -1296,7 +1283,10 @@ describe("tree structure queries", () => {
     }>;
 
     assert.strictEqual(summaries.length, 1);
-    assert.strictEqual(summaries[0].branch_summary, "Explored Branch A approach");
+    assert.strictEqual(
+      summaries[0].branch_summary,
+      "Explored Branch A approach",
+    );
     assert.strictEqual(summaries[0].branch_from_id, "d1");
   });
 });
