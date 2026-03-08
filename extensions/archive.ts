@@ -39,7 +39,7 @@ type EntryRow = {
 
 // --- Schema ---
 
-const SCHEMA = `
+export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS sessions (
   session_id TEXT PRIMARY KEY,
   session_file TEXT NOT NULL,
@@ -100,16 +100,14 @@ CREATE INDEX IF NOT EXISTS idx_entries_role ON entries(role);
 CREATE INDEX IF NOT EXISTS idx_entries_timestamp ON entries(timestamp);
 
 CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
-  text_content,
-  content=entries,
-  content_rowid=rowid
+  text_content
 );
 `;
 
 // --- Pure functions ---
 
 /** Extract searchable text content from a parsed JSONL entry. */
-const extractTextContent = (entry: Record<string, unknown>): string | null => {
+export const extractTextContent = (entry: Record<string, unknown>): string | null => {
   const type = entry.type as string;
 
   if (type === "message") {
@@ -160,7 +158,7 @@ const extractTextContent = (entry: Record<string, unknown>): string | null => {
 };
 
 /** Extract text from a content field that may be a string or content block array. */
-const extractFromContent = (content: unknown): string | null => {
+export const extractFromContent = (content: unknown): string | null => {
   if (typeof content === "string") return content || null;
   if (!Array.isArray(content)) return null;
 
@@ -175,7 +173,7 @@ const extractFromContent = (content: unknown): string | null => {
 };
 
 /** Extract text from assistant content blocks (skip thinking and tool calls). */
-const extractFromAssistantContent = (
+export const extractFromAssistantContent = (
   content: Array<Record<string, unknown>> | undefined,
 ): string | null => {
   if (!Array.isArray(content)) return null;
@@ -190,7 +188,7 @@ const extractFromAssistantContent = (
 };
 
 /** Build column values from a parsed entry for insertion. */
-const entryToRow = (
+export const entryToRow = (
   sessionId: string,
   entry: Record<string, unknown>,
 ): Record<string, unknown> => {
@@ -288,7 +286,7 @@ const entryToRow = (
 
 // --- Database operations ---
 
-const openDb = (dbPath: string): DatabaseSync => {
+export const openDb = (dbPath: string): DatabaseSync => {
   const dir = path.dirname(dbPath);
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -301,7 +299,7 @@ const openDb = (dbPath: string): DatabaseSync => {
   return db;
 };
 
-const INSERT_ENTRY_SQL = `
+export const INSERT_ENTRY_SQL = `
   INSERT OR IGNORE INTO entries (
     session_id, entry_id, parent_id, entry_type, timestamp,
     role, tool_name, tool_call_id, provider, model, stop_reason, is_error,
@@ -329,14 +327,13 @@ const INSERT_ENTRY_SQL = `
   )
 `;
 
-const INSERT_FTS_SQL = `
+export const INSERT_FTS_SQL = `
   INSERT INTO entries_fts(rowid, text_content)
-  SELECT rowid, text_content FROM entries
-  WHERE session_id = :session_id AND entry_id = :entry_id AND text_content IS NOT NULL
+  VALUES (:rowid, :text_content)
 `;
 
 /** Fill in nulls for all optional columns so named params don't error. */
-const padRow = (row: Record<string, unknown>): Record<string, unknown> => ({
+export const padRow = (row: Record<string, unknown>): Record<string, unknown> => ({
   role: null,
   tool_name: null,
   tool_call_id: null,
@@ -360,7 +357,7 @@ const padRow = (row: Record<string, unknown>): Record<string, unknown> => ({
 });
 
 /** Sync a single session file into the database. Returns count of new entries. */
-const syncSessionFile = (
+export const syncSessionFile = (
   db: DatabaseSync,
   sessionFile: string,
 ): number => {
@@ -432,11 +429,13 @@ const syncSessionFile = (
     const result = insertEntry.run(row);
     if (result.changes > 0) {
       newCount++;
-      // Sync FTS for this entry
-      insertFts.run({
-        session_id: sessionId,
-        entry_id: entry.id as string,
-      });
+      // Sync FTS for this entry if it has text content
+      if (row.text_content != null) {
+        insertFts.run({
+          rowid: result.lastInsertRowid,
+          text_content: row.text_content,
+        });
+      }
     }
   }
 
@@ -452,7 +451,7 @@ const syncSessionFile = (
 };
 
 /** Find the session directory for the given cwd. */
-const getSessionDir = (cwd: string): string => {
+export const getSessionDir = (cwd: string): string => {
   const encoded = cwd.replace(/\//g, "-");
   return path.join(
     process.env.HOME ?? "~",
@@ -464,7 +463,7 @@ const getSessionDir = (cwd: string): string => {
 };
 
 /** Sync all session files for the project's cwd. */
-const syncAllSessions = (db: DatabaseSync, cwd: string): number => {
+export const syncAllSessions = (db: DatabaseSync, cwd: string): number => {
   const sessionDir = getSessionDir(cwd);
 
   if (!fs.existsSync(sessionDir)) return 0;
@@ -483,13 +482,13 @@ const syncAllSessions = (db: DatabaseSync, cwd: string): number => {
 
 // --- Search ---
 
-type SearchOptions = {
+export type SearchOptions = {
   query: string;
   role?: string;
   limit?: number;
 };
 
-type SearchResult = {
+export type SearchResult = {
   session_id: string;
   entry_id: string;
   entry_type: string;
@@ -503,7 +502,7 @@ type SearchResult = {
   session_created_at: string;
 };
 
-const searchArchive = (
+export const searchArchive = (
   db: DatabaseSync,
   options: SearchOptions,
 ): SearchResult[] => {
@@ -543,7 +542,7 @@ const searchArchive = (
 
 // --- Stats ---
 
-type ArchiveStats = {
+export type ArchiveStats = {
   sessionCount: number;
   entryCount: number;
   messageCount: number;
@@ -551,7 +550,7 @@ type ArchiveStats = {
   newestSession: string | null;
 };
 
-const getStats = (db: DatabaseSync): ArchiveStats => {
+export const getStats = (db: DatabaseSync): ArchiveStats => {
   const sessionCount = (
     db.prepare("SELECT COUNT(*) AS c FROM sessions").get() as { c: number }
   ).c;
@@ -581,7 +580,7 @@ const getStats = (db: DatabaseSync): ArchiveStats => {
 
 // --- Format helpers ---
 
-const formatSearchResults = (results: SearchResult[]): string => {
+export const formatSearchResults = (results: SearchResult[]): string => {
   if (results.length === 0) return "No results found.";
 
   return results
@@ -598,7 +597,7 @@ const formatSearchResults = (results: SearchResult[]): string => {
     .join("\n\n");
 };
 
-const formatStats = (stats: ArchiveStats): string => {
+export const formatStats = (stats: ArchiveStats): string => {
   const lines = [
     `Archive stats:`,
     `  Sessions: ${stats.sessionCount}`,
