@@ -7,7 +7,7 @@ import * as path from "node:path";
 
 // --- Types ---
 
-type EntryRow = {
+type _EntryRow = {
   rowid: number;
   session_id: string;
   entry_id: string;
@@ -294,6 +294,7 @@ export const openDb = (dbPath: string): DatabaseSync => {
 
   const db = new DatabaseSync(dbPath);
   db.exec("PRAGMA journal_mode = WAL");
+  db.exec("PRAGMA busy_timeout = 5000");
   db.exec("PRAGMA foreign_keys = ON");
   db.exec(SCHEMA);
   return db;
@@ -376,8 +377,6 @@ export const syncSessionFile = (
   if (existingRow && existingRow.file_size >= fileSize) {
     return 0; // No new data
   }
-
-  const previousSize = existingRow?.file_size ?? 0;
 
   // Read the file content
   const content = fs.readFileSync(sessionFile, "utf-8");
